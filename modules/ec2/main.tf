@@ -45,7 +45,7 @@ resource "aws_instance" "my_insta" {
   instance_type          = var.instance_type  # ✅ correct var name
   count = var.ec2_count
   root_block_device {
-    volume_size = var.env == "prod" ? 10 : 20
+    volume_size = var.env == terraform.workspace ? 10 : 20
     volume_type = "gp3"
   }
 

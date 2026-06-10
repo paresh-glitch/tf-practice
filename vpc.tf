@@ -47,11 +47,6 @@ resource "aws_route_table" "public_rt" {
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.pub_nat.id
-
-  }
 }
 
 # Public subnet → public route table
@@ -64,23 +59,5 @@ resource "aws_route_table_association" "pub_assoc" {
 resource "aws_route_table_association" "priv_assoc" {
   subnet_id      = aws_subnet.priv.id
   route_table_id = aws_route_table.private_rt.id
-}
-
-resource "aws_eip" "lb" {
-  domain   = "vpc"
-}
-
-
-resource "aws_nat_gateway" "pub_nat" {
-  allocation_id = aws_eip.lb.id
-  subnet_id     = aws_subnet.pub.id
-
-  tags = {
-    Name = "gw NAT"
-  }
-
-  # To ensure proper ordering, it is recommended to add an explicit dependency
-  # on the Internet Gateway for the VPC.
-  depends_on = [aws_internet_gateway.gw]
 }
 
