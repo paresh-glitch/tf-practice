@@ -13,10 +13,6 @@ variable "ec2_type" {
   type        = string
 }
 
-variable "bucket" {
-  description = "S3 bucket name for terraform state"
-  type        = string
-}
 
 variable "ec2_count" {
   type = number
