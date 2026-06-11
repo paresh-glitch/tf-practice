@@ -11,7 +11,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: hashicorp/setup-terraform@v4
-      
+
+      - name: create public key file
+        run: echo "${{ secrets.EC2_PUBLIC_KEY }}" > terra-key-ec2.pub
+
       - name: terraform init
         run: terraform init
 
