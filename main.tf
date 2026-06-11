@@ -3,7 +3,7 @@ module "infra" {
   env           = terraform.workspace
   ami           = var.ec2_ami
   instance_type = var.ec2_type
-  vpc_id        = aws_vpc.main.id       # ✅ from vpc.tf
-  subnet_id     = aws_subnet.pub.id     # ✅ from vpc.tf
+  vpc_id        = module.vpc.vpc_id
+  subnet_id     = module.vpc.public_subnets[0]   
   ec2_count = var.ec2_count
 }
