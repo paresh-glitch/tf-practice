@@ -8,7 +8,7 @@ terraform.tfstate.d/
 .terraform.lock.hcl
 
 # Sensitive variable files
-*.tfvars
+terraform.tfvars
 
 # SSH keys - never commit these!
 *.pem
