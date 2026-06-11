@@ -1,8 +1,26 @@
 name: cicd with terraform
-
 on:
   push:
     branches: [main, dev, prod]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'apply or destroy'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
+      branch:
+        description: 'which env to destroy (main/dev/prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - main
+          - dev
+          - prod
 
 jobs:
   terraform:
@@ -10,10 +28,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
       - uses: hashicorp/setup-terraform@v4
 
       - name: create public key file
         run: echo "${{ secrets.EC2_PUBLIC_KEY }}" > terra-key-ec2.pub
+
+      - name: set env name
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ENV_NAME=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+          else
+            echo "ENV_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
 
       - name: terraform init
         run: terraform init
@@ -21,25 +53,21 @@ jobs:
       - name: terraform validate
         run: terraform validate
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-
-      - name: select or create workspace
+      - name: select workspace
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "$ENV_NAME" = "main" ]; then
             terraform workspace select default
           else
-            terraform workspace select ${{ github.ref_name }} || terraform workspace new ${{ github.ref_name }}
+            terraform workspace select $ENV_NAME || terraform workspace new $ENV_NAME
           fi
 
       - name: terraform plan
-        run: terraform plan -var-file="${{ github.ref_name }}.tfvars"
+        run: terraform plan -var-file="${ENV_NAME}.tfvars"
 
       - name: terraform apply
-        run: terraform apply -auto-approve -var-file="${{ github.ref_name }}.tfvars"
+        if: ${{ github.event.inputs.action != 'destroy' }}
+        run: terraform apply -auto-approve -var-file="${ENV_NAME}.tfvars"
 
-
-
+      - name: terraform destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve -var-file="${ENV_NAME}.tfvars"
