@@ -65,9 +65,9 @@ jobs:
         run: terraform plan -var-file="${ENV_NAME}.tfvars"
 
       - name: terraform apply
-        if: ${{ github.event.inputs.action != 'destroy' }}
+        if: ${{ github.event_name == 'push' || github.event.inputs.action == 'apply' }}
         run: terraform apply -auto-approve -var-file="${ENV_NAME}.tfvars"
 
       - name: terraform destroy
-        if: ${{ github.event.inputs.action == 'destroy' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' }}
         run: terraform destroy -auto-approve -var-file="${ENV_NAME}.tfvars"
